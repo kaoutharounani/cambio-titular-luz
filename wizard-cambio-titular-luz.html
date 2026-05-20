@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asistente de Cambio de Titular de Luz – papernest</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+
+    :root {
+      --primary: #5A52FF;
+      --primary-light: #EEEDff;
+      --primary-dark: #3f38cc;
+      --green: #0FC4B2;
+      --green-light: #E7F9F7;
+      --yellow: #FFB81D;
+      --yellow-light: #FFF7E8;
+      --text: #000000;
+      --text-muted: #63697F;
+      --bg: #F7F7F9;
+      --white: #FFFFFF;
+      --border: #E2E4EA;
+      --error: #DC2626;
+      --success: #16A34A;
+      --radius: 18px 5px 18px 5px;
+      --radius-sm: 10px;
+      --shadow: 0 4px 24px rgba(90,82,255,0.10);
+      --shadow-lg: 0 8px 40px rgba(90,82,255,0.16);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', 'Avenir', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+    }
+
+    /* ── Header ── */
+    .wizard-header {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .logo-wrap svg { height: 32px; width: auto; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 99px;
+      margin-bottom: 4px;
+    }
+
+    .badge svg { width: 14px; height: 14px; }
+
+    h1 {
+      font-size: clamp(22px, 5vw, 30px);
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    h1 span { color: var(--primary); }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 480px;
+      line-height: 1.5;
+    }
+
+    /* ── Card ── */
+    .wizard-card {
+      width: 100%;
+      max-width: 680px;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar-wrap {
+      background: var(--border);
+      height: 4px;
+      width: 100%;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--green));
+      transition: width .45s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Step indicator ── */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 32px 0;
+    }
+
+    .step-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background .3s, transform .3s;
+    }
+
+    .step-dot.active {
+      background: var(--primary);
+      transform: scale(1.4);
+    }
+
+    .step-dot.done {
+      background: var(--green);
+    }
+
+    /* ── Step content ── */
+    .step-body {
+      padding: 32px 40px 40px;
+      animation: fadeSlide .35s ease both;
+    }
+
+    @media(max-width: 520px) {
+      .step-body { padding: 24px 20px 32px; }
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .step-question {
+      font-size: clamp(18px, 4vw, 22px);
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 24px;
+    }
+
+    /* ── Option cards ── */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .option-card {
+      border: 2px solid var(--border);
+      border-radius: 15px 5px 15px 5px;
+      padding: 20px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, background .2s, transform .15s;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--white);
+      text-align: left;
+    }
+
+    .option-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-light);
+      transform: translateY(-2px);
+    }
+
+    .option-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .option-icon {
+      flex-shrink: 0;
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: var(--bg);
+    }
+
+    .option-card.selected .option-icon { background: var(--primary); }
+
+    .option-text {}
+    .option-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .option-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+    /* ── Result panel ── */
+    .result-wrap {
+      animation: fadeSlide .35s ease both;
+    }
+
+    .result-header {
+      background: linear-gradient(135deg, var(--primary) 0%, #7b75ff 100%);
+      padding: 28px 40px;
+      color: white;
+    }
+
+    @media(max-width: 520px) {
+      .result-header { padding: 24px 20px; }
+    }
+
+    .result-header .scenario-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .result-header h2 {
+      font-size: clamp(18px,4vw,22px);
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .result-header p {
+      font-size: 14px;
+      opacity: .85;
+      line-height: 1.5;
+    }
+
+    /* ── Info pills ── */
+    .info-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 24px 40px 0;
+    }
+
+    @media(max-width: 520px) {
+      .info-pills { padding: 20px 20px 0; }
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+
+    .pill-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .pill-icon.blue  { background: #EEEDff; }
+    .pill-icon.green { background: var(--green-light); }
+    .pill-icon.yellow { background: var(--yellow-light); }
+
+    .pill-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; display: block; }
+    .pill-value { font-size: 15px; font-weight: 700; display: block; }
+
+    /* ── Documents section ── */
+    .docs-section {
+      padding: 24px 40px;
+    }
+
+    @media(max-width: 520px) {
+      .docs-section { padding: 20px; }
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .doc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 14px 16px;
+      transition: background .2s;
+    }
+
+    .doc-item:hover { background: var(--primary-light); }
+
+    .doc-check {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      margin-top: 1px;
+    }
+
+    .doc-check.checked {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .doc-check.checked::after {
+      content: '';
+      width: 10px; height: 6px;
+      border-left: 2px solid white;
+      border-bottom: 2px solid white;
+      transform: rotate(-45deg) translateY(-2px);
+      display: block;
+    }
+
+    .doc-info { flex: 1; }
+    .doc-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .doc-note { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+    .doc-req {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    .doc-req.obligatorio { background: #FEE2E2; color: var(--error); }
+    .doc-req.opcional    { background: var(--green-light); color: #0a8a7c; }
+
+    /* ── Steps section ── */
+    .steps-section {
+      padding: 0 40px 24px;
+    }
+
+    @media(max-width: 520px) {
+      .steps-section { padding: 0 20px 20px; }
+    }
+
+    .step-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step-row {
+      display: flex;
+      gap: 16px;
+      position: relative;
+    }
+
+    .step-line-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 32px;
+    }
+
+    .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .step-connector {
+      flex: 1;
+      width: 2px;
+      background: var(--border);
+      margin: 4px 0;
+      min-height: 20px;
+    }
+
+    .step-row:last-child .step-connector { display: none; }
+
+    .step-content {
+      padding: 4px 0 20px;
+      flex: 1;
+    }
+
+    .step-content-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .step-content-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── Deuda warning ── */
+    .deuda-box {
+      margin: 0 40px 24px;
+      background: var(--yellow-light);
+      border: 1.5px solid var(--yellow);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    @media(max-width: 520px) {
+      .deuda-box { margin: 0 20px 20px; }
+    }
+
+    .deuda-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .deuda-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .deuda-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── CTA section ── */
+    .cta-section {
+      background: var(--bg);
+      padding: 24px 40px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    @media(max-width: 520px) {
+      .cta-section { padding: 20px; }
+    }
+
+    .cta-section p {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--primary);
+      color: white;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 18px 5px 18px 5px;
+      cursor: pointer;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      text-decoration: none;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 4px 14px rgba(90,82,255,.35);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(90,82,255,.4);
+    }
+
+    .btn-restart {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 4px;
+    }
+
+    .btn-restart:hover { color: var(--primary); }
+
+    /* ── Nav buttons ── */
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      gap: 12px;
+    }
+
+    .btn-back {
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+
+    .btn-back:hover { border-color: var(--primary); color: var(--primary); }
+
+    .btn-next {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 18px 5px 18px 5px;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+      margin-left: auto;
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    .btn-next.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .btn-next.active:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    /* ── Trustpilot strip ── */
+    .trust-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .stars { color: #FFB81D; letter-spacing: 1px; font-size: 14px; }
+
+    /* Responsive */
+    @media(max-width: 420px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Progress text ── */
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: right;
+      padding: 8px 16px 0;
+    }
+  </style>
+</head>
+<body>
+
+<header class="wizard-header">
+  <!-- Logo SVG inline (papernest full blue) -->
+  <div class="logo-wrap">
+    <svg viewBox="0 0 1038 191" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M176.636 27.645C147.558 27.645 122.242 52.3206 122.242 82.0366C122.35 96.4287 128.116 110.201 138.293 120.378C148.471 130.555 162.243 136.32 176.636 136.428C178.13 136.428 179.61 136.134 180.99 135.562C182.371 134.99 183.625 134.152 184.682 133.096C185.739 132.039 186.577 130.785 187.149 129.404C187.72 128.023 188.015 126.544 188.015 125.05C188.015 123.555 187.72 122.076 187.149 120.695C186.577 119.315 185.739 118.06 184.682 117.004C183.625 115.947 182.371 115.109 180.99 114.537C179.61 113.965 178.13 113.671 176.636 113.671C168.381 113.47 160.533 110.049 154.766 104.141C148.999 98.2316 145.771 90.3024 145.771 82.046C145.771 73.7896 148.999 65.8604 154.766 59.9515C160.533 54.0426 168.381 50.6223 176.636 50.421C185.017 50.4409 193.049 53.7776 198.977 59.7018C204.905 65.626 208.247 73.656 208.271 82.0366V134.529C208.271 137.546 209.47 140.441 211.604 142.575C213.738 144.708 216.633 145.907 219.65 145.907C222.668 145.907 225.563 144.708 227.697 142.575C229.831 140.441 231.03 137.546 231.03 134.529V78.2563C228.453 50.421 205.055 27.645 176.636 27.645Z" fill="#5A52FF"/>
+      <path d="M298.647 28.2854C270.829 28.2854 247.432 50.422 244.892 77.6178V178.803C244.83 180.337 245.078 181.868 245.623 183.304C246.167 184.74 246.996 186.052 248.059 187.159C249.123 188.267 250.4 189.148 251.812 189.751C253.225 190.353 254.745 190.663 256.281 190.663C257.817 190.663 259.337 190.353 260.749 189.751C262.162 189.148 263.439 188.267 264.502 187.159C265.566 186.052 266.395 184.74 266.939 183.304C267.483 181.868 267.732 180.337 267.669 178.803V82.677C267.669 74.292 271 66.2505 276.93 60.3214C282.859 54.3923 290.901 51.0614 299.286 51.0614C307.672 51.0614 315.713 54.3923 321.643 60.3214C327.572 66.2505 330.903 74.292 330.903 82.677C330.883 91.0559 327.546 99.0859 321.621 105.011C315.696 110.935 307.666 114.273 299.286 114.293C296.346 114.412 293.566 115.664 291.528 117.787C289.489 119.909 288.351 122.738 288.351 125.681C288.351 128.623 289.489 131.452 291.528 133.574C293.566 135.697 296.346 136.949 299.286 137.069C306.429 137.069 313.503 135.662 320.102 132.928C326.701 130.195 332.698 126.188 337.749 121.138C342.799 116.087 346.806 110.091 349.54 103.492C352.273 96.8927 353.68 89.8198 353.68 82.677C353.041 53.5816 327.743 28.2854 298.647 28.2854Z" fill="#5A52FF"/>
+      <path d="M543.4 27.0253C513.682 27.0253 489.006 49.7825 489.006 78.2572V126.367C488.943 127.901 489.192 129.433 489.736 130.869C490.28 132.305 491.109 133.616 492.173 134.724C493.236 135.831 494.513 136.713 495.926 137.315C497.339 137.917 498.859 138.227 500.394 138.227C501.93 138.227 503.45 137.917 504.863 137.315C506.276 136.713 507.552 135.831 508.616 134.724C509.68 133.616 510.508 132.305 511.053 130.869C511.597 129.433 511.845 127.901 511.783 126.367V78.2572C511.783 62.44 526.322 49.7825 543.4 49.7825C546.418 49.7825 549.312 48.5837 551.446 46.4498C553.58 44.3159 554.779 41.4217 554.779 38.4039C554.779 35.3861 553.58 32.4919 551.446 30.358C549.312 28.2241 546.418 27.0253 543.4 27.0253Z" fill="#5A52FF"/>
+      <path d="M421.352 28.2854C392.255 28.2854 366.958 52.9422 366.958 82.677C366.958 97.1026 372.689 110.937 382.889 121.138C393.09 131.338 406.926 137.069 421.352 137.069C424.292 136.949 427.072 135.697 429.11 133.574C431.148 131.452 432.287 128.623 432.287 125.681C432.287 122.738 431.148 119.909 429.11 117.787C427.072 115.664 424.292 114.412 421.352 114.293C412.972 114.273 404.942 110.935 399.017 105.011C393.092 99.0859 389.755 91.0559 389.735 82.677C389.743 75.2454 392.369 68.0542 397.152 62.3661C401.935 56.678 408.569 52.8565 415.889 51.5725C423.209 50.2886 430.748 51.6242 437.181 55.345C443.615 59.0658 448.532 64.9339 451.069 71.9191H426.411C423.471 72.0386 420.691 73.2906 418.652 75.4132C416.614 77.5358 415.476 80.3644 415.476 83.3071C415.476 86.2497 416.614 89.0783 418.652 91.2009C420.691 93.3235 423.471 94.5756 426.411 94.6951H464.404C467.397 94.6951 470.267 93.5061 472.384 91.3899C474.5 89.2736 475.689 86.4034 475.689 83.4105C475.689 53.5816 450.448 28.2854 421.352 28.2854Z" fill="#5A52FF"/>
+      <path d="M616.15 27.0253C586.433 27.0253 561.756 49.7825 561.756 78.2572V126.367C561.694 127.901 561.942 129.433 562.486 130.869C563.031 132.305 563.859 133.616 564.923 134.724C565.987 135.831 567.263 136.713 568.676 137.315C570.089 137.917 571.609 138.227 573.145 138.227C574.68 138.227 576.2 137.917 577.613 137.315C579.026 136.713 580.303 135.831 581.366 134.724C582.43 133.616 583.259 132.305 583.803 130.869C584.347 129.433 584.596 127.901 584.533 126.367V78.2572C584.533 62.44 599.072 49.7825 616.15 49.7825C633.228 49.7825 647.767 62.44 647.767 78.2572V126.367C647.705 127.901 647.953 129.433 648.497 130.869C649.041 132.305 649.87 133.616 650.934 134.724C651.998 135.831 653.274 136.713 654.687 137.315C656.1 137.917 657.62 138.227 659.155 138.227C660.691 138.227 662.211 137.917 663.624 137.315C665.037 136.713 666.313 135.831 667.377 134.724C668.441 133.616 669.269 132.305 669.814 130.869C670.358 129.433 670.606 127.901 670.544 126.367V78.2572C670.544 50.4219 645.886 27.0253 616.15 27.0253Z" fill="#5A52FF"/>
+      <path d="M864.722 71.2984H838.785C836.101 71.2984 833.528 70.2323 831.63 68.3348C829.732 66.4372 828.666 63.8635 828.666 61.1799C828.666 58.4963 829.732 55.9226 831.63 54.0251C833.528 52.1275 836.101 51.0614 838.785 51.0614H882.421C885.361 50.9419 888.141 49.6898 890.179 47.5672C892.217 45.4447 893.356 42.616 893.356 39.6734C893.356 36.7308 892.217 33.9022 890.179 31.7796C888.141 29.657 885.361 28.4049 882.421 28.2854H838.785C834.463 28.2854 830.183 29.1367 826.189 30.7908C822.196 32.4448 818.567 34.8692 815.511 37.9255C812.455 40.9818 810.03 44.6101 808.376 48.6033C806.722 52.5966 805.87 56.8765 805.87 61.1987C805.87 65.5209 806.722 69.8009 808.376 73.7941C810.03 77.7873 812.455 81.4156 815.511 84.4719C818.567 87.5282 822.196 89.9526 826.189 91.6067C830.183 93.2607 834.463 94.112 838.785 94.112H864.722C867.406 94.112 869.979 95.1781 871.877 97.0757C873.775 98.9732 874.841 101.547 874.841 104.231C874.841 106.914 873.775 109.488 871.877 111.385C869.979 113.283 867.406 114.349 864.722 114.349H821.068C818.127 114.469 815.347 115.721 813.309 117.843C811.271 119.966 810.133 122.794 810.133 125.737C810.133 128.68 811.271 131.508 813.309 133.631C815.347 135.753 818.127 137.006 821.068 137.125H864.722C873.451 137.125 881.823 133.657 887.996 127.485C894.169 121.312 897.637 112.941 897.637 104.212C897.637 95.4826 894.169 87.1109 887.996 80.9385C881.823 74.766 873.451 71.2984 864.722 71.2984Z" fill="#5A52FF"/>
+      <path d="M756.554 31.4447C749.743 29.1325 742.536 28.2204 735.364 28.7634C728.192 29.3064 721.203 31.2932 714.818 34.6044C708.351 37.7053 702.595 42.1118 697.914 47.5466C693.233 52.9814 689.729 59.3265 687.621 66.1824C685.31 72.993 684.399 80.2004 684.942 87.3719C685.485 94.5435 687.471 101.531 690.781 107.916C693.884 114.389 698.296 120.148 703.738 124.829C709.18 129.51 715.534 133.011 722.398 135.112C728.09 137.133 734.076 138.2 740.116 138.272C748.457 138.284 756.687 136.352 764.153 132.63C769.795 130.109 771.676 123.226 769.212 117.452C766.748 111.678 759.714 109.929 754.034 112.393C746.357 116.171 737.518 116.845 729.357 114.273C721.138 111.753 714.818 105.434 710.398 97.8356C706.621 90.1651 705.947 81.3335 708.518 73.1788C711.038 64.9411 717.357 58.6217 724.956 54.202C730.865 51.2412 737.532 50.1398 744.079 51.0429C750.626 51.946 756.746 54.8113 761.632 59.2612L739.476 69.9439C738.188 70.5676 737.035 71.4388 736.084 72.5079C735.133 73.5769 734.401 74.8229 733.931 76.1747C733.462 77.5264 733.263 78.9575 733.346 80.3861C733.429 81.8147 733.793 83.213 734.417 84.501C735.04 85.789 735.912 86.9416 736.981 87.8929C738.05 88.8443 739.296 89.5757 740.648 90.0455C741.999 90.5153 743.43 90.7142 744.859 90.631C746.288 90.5477 747.686 90.1839 748.974 89.5603L783.13 73.1224C785.775 71.839 787.804 69.56 788.773 66.7842C790.052 64.264 789.412 61.142 788.152 57.9447C781.467 45.3384 770.132 35.8329 756.554 31.4447Z" fill="#5A52FF"/>
+      <path d="M1026.62 70.6588C1025.13 70.6587 1023.66 70.9537 1022.28 71.5267C1020.91 72.0997 1019.66 72.9393 1018.61 73.9971C1017.56 75.055 1016.73 76.3101 1016.17 77.6901C1015.61 79.0701 1015.33 80.5476 1015.34 82.0374C1015.31 90.4197 1011.97 98.4516 1006.05 104.379C1000.12 110.306 992.087 113.647 983.704 113.672C975.358 113.536 967.392 110.159 961.491 104.255C955.59 98.3511 952.218 90.3833 952.087 82.0374V50.4218H973.585C975.119 50.4842 976.651 50.2358 978.087 49.6916C979.523 49.1474 980.834 48.3186 981.942 47.255C983.05 46.1914 983.931 44.9149 984.533 43.5021C985.136 42.0894 985.446 40.5695 985.446 39.0338C985.446 37.4981 985.136 35.9782 984.533 34.5655C983.931 33.1527 983.05 31.8762 981.942 30.8126C980.834 29.749 979.523 28.9202 978.087 28.376C976.651 27.8318 975.119 27.5834 973.585 27.6458H951.993V11.2079C951.874 8.26773 950.621 5.4877 948.499 3.44963C946.376 1.41156 943.547 0.273438 940.605 0.273438C937.662 0.273438 934.833 1.41156 932.71 3.44963C930.588 5.4877 929.336 8.26773 929.216 11.2079V27.6458H919.097C916.157 27.7653 913.377 29.0174 911.339 31.14C909.3 33.2626 908.162 36.0912 908.162 39.0338C908.162 41.9764 909.3 44.805 911.339 46.9276C913.377 49.0502 916.157 50.3023 919.097 50.4218H929.216V82.0374C929.216 96.4629 934.947 110.298 945.148 120.498C955.348 130.698 969.184 136.429 983.61 136.429C998.036 136.429 1011.87 130.698 1022.07 120.498C1032.27 110.298 1038 96.4629 1038 82.0374C1038.02 80.5396 1037.73 79.0544 1037.16 77.6682C1036.6 76.282 1035.76 75.0227 1034.7 73.9636C1033.64 72.9045 1032.38 72.0668 1030.99 71.4994C1029.61 70.932 1028.12 70.6463 1026.62 70.6588Z" fill="#5A52FF"/>
+      <path d="M53.8929 27.645C40.1769 27.6709 26.9851 32.9169 16.9974 42.3173C7.0097 51.7177 0.975191 64.5675 0.119756 78.2563V178.802C0.0573833 180.336 0.305754 181.867 0.849967 183.303C1.39418 184.739 2.22301 186.051 3.28668 187.158C4.35035 188.266 5.62691 189.148 7.03973 189.75C8.45255 190.352 9.97247 190.662 11.5082 190.662C13.044 190.662 14.5639 190.352 15.9767 189.75C17.3895 189.148 18.6661 188.266 19.7298 187.158C20.7934 186.051 21.6223 184.739 22.1665 183.303C22.7107 181.867 22.9591 180.336 22.8967 178.802V82.0366C22.9215 73.6593 26.2605 65.6321 32.1845 59.7084C38.1084 53.7847 46.1359 50.4458 54.5136 50.421C58.7317 50.3182 62.9278 51.0601 66.8548 52.6032C70.7819 54.1462 74.3606 56.4592 77.3803 59.4061C80.4 62.3529 82.7997 65.874 84.4381 69.7621C86.0765 73.6502 86.9206 77.8268 86.9206 82.046C86.9206 86.2652 86.0765 90.4418 84.4381 94.3299C82.7997 98.218 80.4 101.739 77.3803 104.686C74.3606 107.633 70.7819 109.946 66.8548 111.489C62.9278 113.032 58.7317 113.774 54.5136 113.671C53.0192 113.671 51.5396 113.965 50.159 114.537C48.7784 115.109 47.524 115.947 46.4674 117.004C45.4107 118.06 44.5725 119.315 44.0007 120.695C43.4288 122.076 43.1345 123.555 43.1345 125.05C43.1345 126.544 43.4288 128.023 44.0007 129.404C44.5725 130.785 45.4107 132.039 46.4674 133.096C47.524 134.152 48.7784 134.99 50.159 135.562C51.5396 136.134 53.0192 136.428 54.5136 136.428C83.6101 136.428 108.907 111.771 108.907 82.0366C108.907 52.3018 82.9894 27.645 53.8929 27.645Z" fill="#5A52FF"/>
+    </svg>
+  </div>
+
+  <div class="badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Asistente único en el mercado
+  </div>
+  <h1>¿Cuándo y cómo cambiar el<br><span>titular de tu luz?</span></h1>
+  <p class="subtitle">Responde 3 preguntas y obtén tu guía personalizada: documentos exactos, plazos y costes según tu situación.</p>
+</header>
+
+<div class="wizard-card" id="wizardCard">
+  <!-- Rendered by JS -->
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const MOTIVOS = [
+  { id: 'herencia', icon: '🏛️', title: 'Herencia / Fallecimiento', desc: 'El titular ha fallecido y vas a asumir el contrato' },
+  { id: 'venta',    icon: '🏠', title: 'Compraventa de piso',      desc: 'Has comprado o vendido un inmueble' },
+  { id: 'divorcio', icon: '⚖️', title: 'Separación o divorcio',    desc: 'Una de las partes se queda en la vivienda' },
+  { id: 'mudanza',  icon: '📦', title: 'Alquiler o mudanza',       desc: 'Te mudas, cambias de inquilino o de propietario' },
+];
+
+const COMPANIA_TIENE = [
+  { id: 'si',  icon: '✅', title: 'Sí, el contrato está al día',     desc: 'Sin facturas pendientes' },
+  { id: 'no',  icon: '⚠️', title: 'No, hay deudas pendientes',       desc: 'Hay facturas sin pagar del anterior titular' },
+  { id: 'ns',  icon: '❓', title: 'No lo sé',                        desc: 'Necesito comprobarlo' },
+];
+
+const METODO = [
+  { id: 'subrogacion', icon: '🔄', title: 'Subrogación (mantener tarifa)', desc: 'Mismo contrato, mismo precio. Asumes las condiciones y posibles deudas' },
+  { id: 'traspaso',    icon: '🆕', title: 'Traspaso (nueva tarifa)',        desc: 'Nuevo contrato con la misma u otra compañía. Solo si no hay deudas' },
+];
+
+// ─── RESULT CONFIG ──────────────────────────────────────────────────────────
+
+function getResult(motivo, deuda, metodo) {
+  const configs = {
+    herencia: {
+      emoji: '🏛️',
+      label: 'Herencia / Fallecimiento',
+      title: 'Cambio de titular por herencia',
+      desc: 'El heredero debe asumir el contrato presentando la documentación que acredite su derecho al suministro. Si hay deudas, el heredero deberá asumir las pendientes del fallecido.',
+      plazo: '15–20 días hábiles',
+      coste: 'Gratuito (posibles costes técnicos)',
+      metodo_rec: 'Subrogación',
+      docs: [
+        { name: 'DNI/NIE del nuevo titular', note: 'En vigor', req: 'obligatorio' },
+        { name: 'Certificado de defunción del titular', note: 'Emitido por el Registro Civil', req: 'obligatorio' },
+        { name: 'Testamento o acta de notoriedad', note: 'Que acredite la condición de heredero', req: 'obligatorio' },
+        { name: 'Código CUPS del suministro', note: 'En la factura antigua o en el contador', req: 'obligatorio' },
+        { name: 'IBAN del nuevo titular', note: 'Para domiciliación de facturas', req: 'obligatorio' },
+        { name: 'Escritura de la vivienda', note: 'O nota simple del registro', req: 'opcional' },
+      ],
+      steps: [
+        { title: 'Localiza el CUPS', desc: 'Lo encontrarás en la última factura del fallecido o en el cuadro eléctrico.' },
+        { title: 'Reúne la documentación', desc: 'Certificado de defunción + testamento o acta notarial de heredero.' },
+        { title: 'Contacta con la comercializadora', desc: 'Por teléfono, área de cliente online o en oficina.' },
+        { title: 'Solicita la subrogación', desc: 'Presenta los documentos. La compañía gestionará el cambio.' },
+        { title: 'Confirma el cambio', desc: 'En 15–20 días recibirás confirmación. El antiguo titular recibirá una última factura de liquidación.' },
+      ],
+      deuda_warn: deuda === 'no' ? '⚠️ En herencias, las deudas del suministro van asociadas al punto de suministro. Como heredero, deberás abonar las facturas pendientes del fallecido para poder activar el servicio.' : null,
+    },
+
+    venta: {
+      emoji: '🏠',
+      label: 'Compraventa de piso',
+      title: 'Cambio de titular por compraventa',
+      desc: 'El comprador asume el contrato. Puede mantener la misma tarifa (subrogación) o contratar una nueva. Sin deudas previas, ambas opciones están disponibles.',
+      plazo: '15–20 días hábiles',
+      coste: 'Gratuito',
+      metodo_rec: metodo === 'traspaso' ? 'Traspaso (nuevo contrato)' : 'Subrogación',
+      docs: [
+        { name: 'DNI/NIE del nuevo titular (comprador)', note: 'En vigor', req: 'obligatorio' },
+        { name: 'Escritura de compraventa o nota simple', note: 'Acredita la propiedad', req: 'obligatorio' },
+        { name: 'Código CUPS del suministro', note: 'En la última factura del vendedor', req: 'obligatorio' },
+        { name: 'IBAN del nuevo titular', note: 'Para domiciliación', req: 'obligatorio' },
+        { name: 'Datos del anterior titular', note: 'Nombre y apellidos', req: 'obligatorio' },
+        { name: 'Últimas facturas del vendedor', note: 'Para verificar que no hay deudas', req: 'opcional' },
+      ],
+      steps: [
+        { title: 'Pide las últimas facturas al vendedor', desc: 'Verifica que el contrato está al corriente de pago antes de firmar.' },
+        { title: 'Obtén el CUPS', desc: 'Está en la factura del vendedor. Anótalo antes de la entrega de llaves.' },
+        { title: 'Elige tu opción: subrogación o traspaso', desc: metodo === 'traspaso' ? 'Con traspaso puedes comparar tarifas y contratar la más económica.' : 'Con subrogación mantienes la tarifa actual del vendedor.' },
+        { title: 'Contacta con la comercializadora', desc: 'Presenta la escritura de compraventa y tu DNI.' },
+        { title: 'Confirma el cambio en 15–20 días', desc: 'El vendedor recibirá una última factura hasta la fecha del cambio.' },
+      ],
+      deuda_warn: deuda === 'no' ? '⚠️ Si el contrato tiene deudas, solo puedes hacer subrogación (asumiendo la deuda). El traspaso requiere que el contrato esté libre de deudas.' : null,
+    },
+
+    divorcio: {
+      emoji: '⚖️',
+      label: 'Separación o divorcio',
+      title: 'Cambio de titular por separación',
+      desc: 'Quien se queda en la vivienda asume el contrato. La resolución judicial o el convenio regulador es el documento clave para acreditar el derecho al suministro.',
+      plazo: '15–20 días hábiles',
+      coste: 'Gratuito',
+      metodo_rec: 'Subrogación',
+      docs: [
+        { name: 'DNI/NIE del nuevo titular', note: 'La persona que se queda en la vivienda', req: 'obligatorio' },
+        { name: 'Resolución judicial de divorcio / Convenio regulador', note: 'Que acredite el uso de la vivienda', req: 'obligatorio' },
+        { name: 'Código CUPS del suministro', note: 'En las facturas anteriores', req: 'obligatorio' },
+        { name: 'IBAN del nuevo titular', note: 'Para domiciliación', req: 'obligatorio' },
+        { name: 'Datos del anterior titular', note: 'Nombre y apellidos del excónyuge', req: 'obligatorio' },
+        { name: 'Contrato de alquiler actualizado', note: 'Si la vivienda es de alquiler', req: 'opcional' },
+      ],
+      steps: [
+        { title: 'Obtén la resolución judicial o convenio', desc: 'Necesitas el documento que acredite que tienes derecho a usar la vivienda.' },
+        { title: 'Localiza el CUPS', desc: 'En las facturas anteriores de la vivienda.' },
+        { title: 'Contacta con la comercializadora', desc: 'Indica que quieres hacer un cambio de titular por separación.' },
+        { title: 'Presenta los documentos', desc: 'DNI + resolución judicial. No es necesario el consentimiento del anterior titular.' },
+        { title: 'El cambio se confirma en 15–20 días', desc: 'La compañía tramitará el cambio sin necesidad de que el anterior titular intervenga.' },
+      ],
+      deuda_warn: deuda === 'no' ? '⚠️ Si el contrato tiene deudas, estas pueden asociarse al punto de suministro. Consulta con la compañía si puedes hacer un traspaso sin subrogación de deuda.' : null,
+    },
+
+    mudanza: {
+      emoji: '📦',
+      label: 'Alquiler o mudanza',
+      title: 'Cambio de titular por mudanza o alquiler',
+      desc: 'El inquilino o nuevo ocupante asume el contrato. El contrato de alquiler o el acuerdo entre propietario e inquilino es la documentación base.',
+      plazo: '15–20 días hábiles',
+      coste: 'Gratuito',
+      metodo_rec: metodo === 'traspaso' ? 'Traspaso (nuevo contrato)' : 'Subrogación',
+      docs: [
+        { name: 'DNI/NIE del nuevo titular', note: 'Inquilino o nuevo ocupante', req: 'obligatorio' },
+        { name: 'Contrato de alquiler o título de ocupación', note: 'Acredita el derecho al suministro', req: 'obligatorio' },
+        { name: 'Código CUPS del suministro', note: 'En las facturas del anterior titular o en el contador', req: 'obligatorio' },
+        { name: 'IBAN del nuevo titular', note: 'Para domiciliación', req: 'obligatorio' },
+        { name: 'Datos del anterior titular', note: 'Nombre, apellidos y DNI si es posible', req: 'obligatorio' },
+        { name: 'Últimas facturas del anterior titular', note: 'Para verificar deudas', req: 'opcional' },
+      ],
+      steps: [
+        { title: 'Firma el contrato de alquiler', desc: 'Necesitas un documento que acredite tu derecho al uso del inmueble.' },
+        { title: 'Localiza el CUPS', desc: 'Pídelo al propietario o búscalo en las últimas facturas del piso.' },
+        { title: 'Verifica el estado del contrato', desc: 'Solicita al propietario la confirmación de que no hay deudas pendientes.' },
+        { title: 'Elige subrogación o traspaso', desc: metodo === 'traspaso' ? 'Con traspaso puedes buscar la tarifa más barata del mercado.' : 'La subrogación mantiene las condiciones actuales del contrato.' },
+        { title: 'Contacta con la comercializadora', desc: 'Presenta tu DNI y el contrato de alquiler. El cambio se hará efectivo en 15–20 días.' },
+      ],
+      deuda_warn: deuda === 'no' ? '⚠️ Si hay deudas pendientes, la compañía puede exigirte abonarlas mediante subrogación. Negocia con el propietario quién asume esas deudas antes de firmar el alquiler.' : null,
+    },
+  };
+
+  return configs[motivo] || null;
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let state = {
+  step: 0,         // 0, 1, 2 = wizard steps; 3 = result
+  motivo: null,
+  deuda: null,
+  metodo: null,
+};
+
+const TOTAL_STEPS = 3;
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function render() {
+  const card = document.getElementById('wizardCard');
+  if (state.step === TOTAL_STEPS) {
+    card.innerHTML = renderResult();
+  } else {
+    card.innerHTML = renderStep();
+  }
+  attachEvents();
+}
+
+function progressPct() {
+  return Math.round((state.step / TOTAL_STEPS) * 100);
+}
+
+function dotsHtml() {
+  return Array.from({ length: TOTAL_STEPS }, (_, i) => {
+    const cls = i < state.step ? 'done' : i === state.step ? 'active' : '';
+    return `<div class="step-dot ${cls}"></div>`;
+  }).join('');
+}
+
+function renderStep() {
+  const pct = progressPct();
+
+  let questionHtml = '';
+
+  if (state.step === 0) {
+    questionHtml = `
+      <div class="step-label">Paso 1 de 3</div>
+      <div class="step-question">¿Cuál es el motivo del cambio de titular?</div>
+      <div class="options-grid">
+        ${MOTIVOS.map(m => `
+          <div class="option-card ${state.motivo === m.id ? 'selected' : ''}" data-type="motivo" data-value="${m.id}">
+            <div class="option-icon">${m.icon}</div>
+            <div class="option-text">
+              <div class="option-title">${m.title}</div>
+              <div class="option-desc">${m.desc}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (state.step === 1) {
+    questionHtml = `
+      <div class="step-label">Paso 2 de 3</div>
+      <div class="step-question">¿El contrato actual tiene deudas pendientes?</div>
+      <div class="options-grid" style="grid-template-columns:1fr 1fr 1fr">
+        ${COMPANIA_TIENE.map(m => `
+          <div class="option-card ${state.deuda === m.id ? 'selected' : ''}" data-type="deuda" data-value="${m.id}">
+            <div class="option-icon">${m.icon}</div>
+            <div class="option-text">
+              <div class="option-title">${m.title}</div>
+              <div class="option-desc">${m.desc}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (state.step === 2) {
+    const disabled = state.deuda === 'no';
+    questionHtml = `
+      <div class="step-label">Paso 3 de 3</div>
+      <div class="step-question">¿Qué método prefieres para el cambio?</div>
+      <div class="options-grid">
+        ${METODO.map(m => {
+          const isDisabled = m.id === 'traspaso' && disabled;
+          return `
+            <div class="option-card ${state.metodo === m.id ? 'selected' : ''} ${isDisabled ? 'option-disabled' : ''}"
+                 data-type="metodo" data-value="${m.id}" ${isDisabled ? 'data-disabled="true"' : ''}>
+              <div class="option-icon">${m.icon}</div>
+              <div class="option-text">
+                <div class="option-title">${m.title} ${isDisabled ? '<span style="font-size:11px;color:#DC2626;font-weight:600">(no disponible con deudas)</span>' : ''}</div>
+                <div class="option-desc">${m.desc}</div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  const isNextActive = (state.step === 0 && state.motivo) ||
+                       (state.step === 1 && state.deuda) ||
+                       (state.step === 2 && state.metodo);
+
+  return `
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="step-indicator">${dotsHtml()}</div>
+    <div class="step-body">
+      ${questionHtml}
+      <div class="nav-row">
+        ${state.step > 0
+          ? `<button class="btn-back" id="btnBack">← Atrás</button>`
+          : `<div></div>`}
+        <button class="btn-next ${isNextActive ? 'active' : ''}" id="btnNext">
+          ${state.step < TOTAL_STEPS - 1 ? 'Siguiente →' : 'Ver mi guía personalizada →'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderResult() {
+  const r = getResult(state.motivo, state.deuda, state.metodo);
+  if (!r) return '<p>Error al obtener resultados.</p>';
+
+  const docsHtml = r.docs.map((d, i) => `
+    <li class="doc-item">
+      <div class="doc-check" data-idx="${i}" id="chk-${i}"></div>
+      <div class="doc-info">
+        <div class="doc-name">${d.name}</div>
+        <div class="doc-note">${d.note}</div>
+      </div>
+      <span class="doc-req ${d.req}">${d.req === 'obligatorio' ? 'Obligatorio' : 'Opcional'}</span>
+    </li>
+  `).join('');
+
+  const stepsHtml = r.steps.map((s, i) => `
+    <li class="step-row">
+      <div class="step-line-wrap">
+        <div class="step-num">${i + 1}</div>
+        <div class="step-connector"></div>
+      </div>
+      <div class="step-content">
+        <div class="step-content-title">${s.title}</div>
+        <div class="step-content-desc">${s.desc}</div>
+      </div>
+    </li>
+  `).join('');
+
+  const deudaWarn = r.deuda_warn ? `
+    <div class="deuda-box">
+      <div class="deuda-icon">⚠️</div>
+      <div>
+        <div class="deuda-title">Atención: situación con deudas</div>
+        <div class="deuda-text">${r.deuda_warn.replace('⚠️ ', '')}</div>
+      </div>
+    </div>
+  ` : '';
+
+  return `
+    <div class="result-wrap">
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:100%"></div></div>
+
+      <div class="result-header">
+        <div class="scenario-badge">${r.emoji} ${r.label}</div>
+        <h2>${r.title}</h2>
+        <p>${r.desc}</p>
+      </div>
+
+      <div class="info-pills">
+        <div class="pill">
+          <div class="pill-icon blue">⏱️</div>
+          <div>
+            <span class="pill-label">Plazo</span>
+            <span class="pill-value">${r.plazo}</span>
+          </div>
+        </div>
+        <div class="pill">
+          <div class="pill-icon green">💶</div>
+          <div>
+            <span class="pill-label">Coste</span>
+            <span class="pill-value">${r.coste}</span>
+          </div>
+        </div>
+        <div class="pill">
+          <div class="pill-icon yellow">🔄</div>
+          <div>
+            <span class="pill-label">Método recomendado</span>
+            <span class="pill-value">${r.metodo_rec}</span>
+          </div>
+        </div>
+      </div>
+
+      ${deudaWarn}
+
+      <div class="docs-section">
+        <div class="section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Documentos necesarios — marca los que ya tienes
+        </div>
+        <ul class="doc-list">${docsHtml}</ul>
+      </div>
+
+      <div class="steps-section">
+        <div class="section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Pasos a seguir
+        </div>
+        <ul class="step-list">${stepsHtml}</ul>
+      </div>
+
+      <div class="cta-section">
+        <p>¿Prefieres que papernest gestione el cambio por ti? <strong>Sin coste adicional</strong> y en un solo paso.</p>
+        <a href="tel:919014228" class="btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          Llamar al 919 014 228
+        </a>
+        <div class="trust-strip">
+          <span class="stars">★★★★★</span>
+          <span>4,6/5 en Trustpilot · +1M clientes · Servicio gratuito</span>
+        </div>
+        <button class="btn-restart" id="btnRestart">Empezar de nuevo</button>
+      </div>
+    </div>
+  `;
+}
+
+// ─── EVENTS ──────────────────────────────────────────────────────────────────
+
+function attachEvents() {
+  // Option cards
+  document.querySelectorAll('.option-card').forEach(card => {
+    card.addEventListener('click', () => {
+      if (card.dataset.disabled) return;
+      const type = card.dataset.type;
+      const val  = card.dataset.value;
+      state[type] = val;
+
+      // If deuda = 'no' and metodo was traspaso, reset metodo
+      if (type === 'deuda' && val === 'no' && state.metodo === 'traspaso') {
+        state.metodo = null;
+      }
+
+      render();
+    });
+  });
+
+  // Next
+  const btnNext = document.getElementById('btnNext');
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      if (!btnNext.classList.contains('active')) return;
+      state.step++;
+      render();
+      document.getElementById('wizardCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // Back
+  const btnBack = document.getElementById('btnBack');
+  if (btnBack) {
+    btnBack.addEventListener('click', () => {
+      state.step--;
+      render();
+    });
+  }
+
+  // Restart
+  const btnRestart = document.getElementById('btnRestart');
+  if (btnRestart) {
+    btnRestart.addEventListener('click', () => {
+      state = { step: 0, motivo: null, deuda: null, metodo: null };
+      render();
+      document.getElementById('wizardCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // Doc checkboxes
+  document.querySelectorAll('.doc-check').forEach(chk => {
+    chk.addEventListener('click', () => {
+      chk.classList.toggle('checked');
+    });
+  });
+
+  // Disabled option styling
+  document.querySelectorAll('.option-card[data-disabled]').forEach(card => {
+    card.style.opacity = '0.45';
+    card.style.cursor = 'not-allowed';
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
